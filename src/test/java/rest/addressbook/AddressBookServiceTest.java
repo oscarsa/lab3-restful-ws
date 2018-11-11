@@ -225,7 +225,23 @@ public class AddressBookServiceTest {
 		// Verify that GET /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is safe and idempotent
 		//////////////////////////////////////////////////////////////////////	
-	
+
+		// Test list of contacts again
+		Response newResponse = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON).get();
+		assertEquals(200, newResponse.getStatus());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, newResponse.getMediaType());
+		AddressBook newAddressBookRetrieved = newResponse
+				.readEntity(AddressBook.class);
+		assertEquals(2, newAddressBookRetrieved.getPersonList().size());
+		assertEquals(juan.getName(), newAddressBookRetrieved.getPersonList()
+				.get(1).getName());
+		
+		// Compare previous and current contact list
+		assertEquals(addressBookRetrieved.getPersonList().size(), 
+				newAddressBookRetrieved.getPersonList().size());
+		assertEquals(addressBookRetrieved.getPersonList().get(1).getName(), 
+				newAddressBookRetrieved.getPersonList().get(1).getName());
 	}
 
 	@Test
