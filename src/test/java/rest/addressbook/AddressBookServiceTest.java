@@ -44,16 +44,27 @@ public class AddressBookServiceTest {
 
 		// Request the address book
 		Client client = ClientBuilder.newClient();
-		Response response = client.target("http://localhost:8282/contacts")
-				.request().get();
-		assertEquals(200, response.getStatus());
-		assertEquals(0, response.readEntity(AddressBook.class).getPersonList()
-				.size());
 
 		//////////////////////////////////////////////////////////////////////
 		// Verify that GET /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is safe and idempotent
 		//////////////////////////////////////////////////////////////////////
+
+		Response response = client.target("http://localhost:8282/contacts")
+				.request().get();
+		assertEquals(200, response.getStatus());
+
+		AddressBook addressBook = response.readEntity(AddressBook.class);
+		assertEquals(0, addressBook.getPersonList().size());
+
+		// The request must be safe and idempotent
+		Response response2 = client.target("http://localhost:8282/contacts")
+				.request().get();
+		assertEquals(response.getStatus(),response2.getStatus());
+
+		AddressBook addressBook2 = response2.readEntity(AddressBook.class);
+		assertEquals(addressBook.getPersonList().size(),addressBook2
+				.getPersonList().size());
 	}
 
 	@Test
@@ -95,7 +106,28 @@ public class AddressBookServiceTest {
 		// Verify that POST /contacts is well implemented by the service, i.e
 		// complete the test to ensure that it is not safe and not idempotent
 		//////////////////////////////////////////////////////////////////////	
+
+		// The request should not be safe and not idempotent
 				
+		// Try to post the same person
+		response = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(juan, MediaType.APPLICATION_JSON));
+
+		// New URI that the server should response with
+		URI newURI = URI.create("http://localhost:8282/contacts/person/2");
+
+		// Check if the contact has been created in the newURI
+		assertEquals(201, response.getStatus());
+		assertEquals(newURI, response.getLocation());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
+
+		// Check if the person list has changed
+		Response newResponse = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON).get();
+		assertEquals(200,newResponse.getStatus());
+		assertEquals(2, newResponse.readEntity(AddressBook.class).getPersonList()
+				.size());
 	}
 
 	@Test
