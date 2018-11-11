@@ -20,6 +20,7 @@ import rest.addressbook.domain.AddressBook;
 import rest.addressbook.domain.Person;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * A simple test suite.
@@ -357,6 +358,32 @@ public class AddressBookServiceTest {
 		// Verify that DELETE /contacts/person/2 is well implemented by the service, i.e
 		// complete the test to ensure that it is idempotent but not safe
 		//////////////////////////////////////////////////////////////////////	
+
+		// Test that DELETE is not safe
+
+		client = ClientBuilder.newClient();
+		Response newResponse = client
+				.target("http://localhost:8282/contacts/person/1").request()
+				.delete();
+		assertEquals(204, newResponse.getStatus());
+
+		// Verify that the user has been deleted
+		Response newResponse2 = client.target("http://localhost:8282/contacts/person/1")
+				.request().delete();
+		assertEquals(404, newResponse2.getStatus());
+
+		//Compare that HTTP response status codes for the
+		//same DELETE action are different
+		assertNotEquals(newResponse.getStatus(), newResponse2.getStatus());
+
+		//Test that DELETE is idempotent
+
+		//Check that the previous failed DELETE fails again because client 
+		//was previously deleted
+		newResponse2 = client.target("http://localhost:8282/contacts/person/1")
+				.request().delete();
+		assertEquals(404, newResponse2.getStatus());
+
 
 	}
 
