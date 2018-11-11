@@ -294,6 +294,36 @@ public class AddressBookServiceTest {
 		// Verify that PUT /contacts/person/2 is well implemented by the service, i.e
 		// complete the test to ensure that it is idempotent but not safe
 		//////////////////////////////////////////////////////////////////////	
+
+		// Test that PUT is idempotent but not safe
+
+		maria.setName("MariaTest");
+
+		Response newResponse = client
+				.target("http://localhost:8282/contacts/person/2")
+				.request(MediaType.APPLICATION_JSON)
+				.put(Entity.entity(maria, MediaType.APPLICATION_JSON));
+		assertEquals(200, newResponse.getStatus());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, newResponse.getMediaType());
+
+		// Check Maria new name, PUT is not safe
+		Person newPerson = newResponse.readEntity(Person.class);
+		assertEquals("MariaTest", newPerson.getName());
+		assertEquals(mariaRetrieved.getId(), newPerson.getId());
+		assertEquals(mariaRetrieved.getHref(), newPerson.getHref());
+
+		// Check if Maria has the same name if we test PUT with the same 
+		// parameters, PUT is idempotent
+		newResponse = client
+				.target("http://localhost:8282/contacts/person/2")
+				.request(MediaType.APPLICATION_JSON)
+				.put(Entity.entity(maria, MediaType.APPLICATION_JSON));
+		assertEquals(200, newResponse.getStatus());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, newResponse.getMediaType());
+		Person newPerson2 = newResponse.readEntity(Person.class);
+		assertEquals(newPerson.getName(), newPerson2.getName());
+		assertEquals(newPerson.getId(), newPerson2.getId());
+		assertEquals(newPerson.getHref(), newPerson2.getHref());
 	
 	}
 
